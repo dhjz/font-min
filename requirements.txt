@@ -1,0 +1,6 @@
+fonttools>=4.53.0
+brotli>=1.1.0
+fastapi>=0.115.0
+uvicorn>=0.32.0
+python-multipart>=0.0.12
+apscheduler>=3.10.0

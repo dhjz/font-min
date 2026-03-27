@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DFont - 字体转换与压缩工具</title>
+  <link rel="stylesheet" href="static/index.css">
+</head>
+<body @dragover.prevent="onDragOver" @dragleave="onDragLeave" @drop.prevent="onDrop">
+  <div id="app" v-cloak>
+    <div class="header">
+      <div class="logo">🎨 DFont</div>
+      <div class="subtitle">字体转换与压缩工具</div>
+    </div>
+    
+    <div class="tabs">
+      <div class="tab" :class="{ active: activeTab === 'convert' }" @click="activeTab = 'convert'">
+        <span class="tab-icon">🔄</span> 字体转换
+      </div>
+      <div class="tab" :class="{ active: activeTab === 'compress' }" @click="activeTab = 'compress'">
+        <span class="tab-icon">📦</span> 字体压缩
+      </div>
+    </div>
+    
+    <div class="main-container">
+      <div class="upload-area" 
+           :class="{ 'drag-over': isDragging, 'has-file': currentFile }"
+           @click="triggerUpload">
+        <input type="file" ref="fileInput" :accept="acceptFormats" @change="handleFileSelect" hidden>
+        <div v-if="!currentFile" class="upload-placeholder">
+          <div class="upload-icon">📁</div>
+          <div class="upload-text">点击或拖拽字体文件到页面任意位置上传</div>
+          <div class="upload-hint">支持 TTF、OTF、WOFF、WOFF2、EOT、SVG 格式</div>
+        </div>
+        <div v-else class="file-info">
+          <div class="file-icon">📄</div>
+          <div class="file-details">
+            <div class="file-name">{{ currentFile.name }}</div>
+            <div class="file-meta">
+              <span class="file-size">{{ formatSize(currentFile.size) }}</span>
+              <span class="file-format">{{ getFileFormat(currentFile.name) }}</span>
+            </div>
+          </div>
+          <button class="btn-remove" @click.stop="removeFile">✕</button>
+        </div>
+      </div>
+      
+      <div class="tab-content" v-show="activeTab === 'convert'">
+        <div class="options-panel">
+          <div class="option-group">
+            <label>目标格式</label>
+            <div class="format-options">
+              <label v-for="fmt in targetFormats" :key="fmt" class="format-option" :class="{ disabled: getFileFormat(currentFile?.name) === fmt }">
+                <input type="radio" v-model="convertFormat" :value="fmt" :disabled="getFileFormat(currentFile?.name) === fmt">
+                <span class="format-label">{{ fmt.toUpperCase() }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-large" @click="convertFont" :disabled="!currentFile || loading">
+          <span v-if="loading" class="loading-spinner"></span>
+          {{ loading ? '转换中...' : '开始转换' }}
+        </button>
+      </div>
+      
+      <div class="tab-content" v-show="activeTab === 'compress'">
+        <div class="options-panel">
+          <div class="option-group">
+            <label>需要保留的文字</label>
+            <textarea v-model="compressText" placeholder="请输入需要保留的文字，工具将只提取包含这些文字的字体子集..." rows="4"></textarea>
+            <div class="char-count">已输入 {{ compressText.length }} 个字符，{{ uniqueCharCount }} 个不重复字符</div>
+          </div>
+          <div class="option-group">
+            <label>目标格式</label>
+            <div class="format-options">
+              <label v-for="fmt in targetFormats" :key="fmt" class="format-option">
+                <input type="radio" v-model="compressFormat" :value="fmt">
+                <span class="format-label">{{ fmt.toUpperCase() }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-large" @click="compressFont" :disabled="!currentFile || !compressText.trim() || loading">
+          <span v-if="loading" class="loading-spinner"></span>
+          {{ loading ? '压缩中...' : '开始压缩' }}
+        </button>
+      </div>
+      
+      <div v-if="result" class="result-panel">
+        <div class="result-header">
+          <span class="result-icon">✅</span>
+          <span>{{ activeTab === 'convert' ? '转换完成' : '压缩完成' }}</span>
+        </div>
+        <div class="result-stats">
+          <div class="stat-item">
+            <div class="stat-label">原始大小</div>
+            <div class="stat-value">{{ result.input_size_formatted }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">输出大小</div>
+            <div class="stat-value">{{ result.output_size_formatted }}</div>
+          </div>
+          <div v-if="result.compression_ratio" class="stat-item">
+            <div class="stat-label">压缩比例</div>
+            <div class="stat-value highlight">{{ result.compression_ratio }}%</div>
+          </div>
+          <div v-if="result.char_count" class="stat-item">
+            <div class="stat-label">保留字符</div>
+            <div class="stat-value">{{ result.char_count }} 个</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">耗时</div>
+            <div class="stat-value">{{ result.elapsed_time }}s</div>
+          </div>
+        </div>
+        <div class="result-actions">
+          <button class="btn btn-success" @click="downloadResult">⬇️ 下载字体</button>
+          <button class="btn btn-secondary" @click="previewFont">👁️ 预览字体</button>
+        </div>
+        <div class="css-example">
+          <div class="css-example-header">
+            <span class="css-example-title">📝 CSS 引用示例</span>
+            <button class="btn-copy" @click="copyCSS">📋 复制</button>
+          </div>
+          <pre class="css-code"><code>@font-face {
+  font-family: 'MyFont';
+  src: url('/webapi/download/{{ result.output_id }}') format('{{ result.target_format }}');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.my-font {
+  font-family: 'MyFont', sans-serif;
+}</code></pre>
+        </div>
+      </div>
+    </div>
+    
+    <div class="preview-modal" v-if="showPreview" @click="showPreview = false">
+      <div class="preview-content" @click.stop>
+        <div class="preview-header">
+          <h3>字体预览</h3>
+          <button class="btn-close" @click="showPreview = false">✕</button>
+        </div>
+        <div class="preview-body" :style="{ fontFamily: 'PreviewFont' }">
+          <div class="preview-text" v-for="size in previewSizes" :key="size" :style="{ fontSize: size + 'px' }">
+            {{ previewText }}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="toast" :class="toast.type" v-if="toast.show">{{ toast.message }}</div>
+    
+    <div class="history-panel" :class="{ 'collapsed': historyCollapsed }">
+      <div class="history-header" @click="historyCollapsed = !historyCollapsed">
+        <span class="history-title">📜 历史记录</span>
+        <span class="history-toggle">{{ historyCollapsed ? '◀' : '▶' }}</span>
+      </div>
+      <div class="history-list" v-if="!historyCollapsed">
+        <div v-if="history.length === 0" class="history-empty">暂无历史记录</div>
+        <div v-for="item in history" :key="item.output_id" class="history-item" @click="loadHistoryItem(item)">
+          <div class="history-item-header">
+            <span class="history-type">{{ item.type === 'convert' ? '🔄 转换' : '📦 压缩' }}</span>
+            <span class="history-time">{{ formatTime(item.timestamp) }}</span>
+          </div>
+          <div class="history-item-body">
+            <div class="history-filename">{{ item.output_filename }}</div>
+            <div class="history-info">
+              <span v-if="item.type === 'convert'">{{ item.source_format?.toUpperCase() }} → {{ item.target_format?.toUpperCase() }}</span>
+              <span v-else>{{ item.target_format?.toUpperCase() }}</span>
+              <span>{{ formatSize(item.output_size) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="static/vue.global.prod.js"></script>
+  <script src="static/utils.js"></script>
+  <script>
+    const app = Vue.createApp({
+      data() {
+        return {
+          activeTab: 'convert',
+          currentFile: null,
+          filePath: null,
+          isDragging: false,
+          loading: false,
+          result: null,
+          convertFormat: 'woff2',
+          compressFormat: 'woff2',
+          compressText: '',
+          targetFormats: ['ttf', 'otf', 'woff', 'woff2', 'eot', 'svg'],
+          showPreview: false,
+          previewSizes: [16, 24, 32, 48],
+          previewText: '永字八法 点横竖撇捺折钩提 The quick brown fox jumps over the lazy dog 1234567890',
+          toast: { show: false, message: '', type: 'info' },
+          history: [],
+          historyCollapsed: false
+        }
+      },
+      computed: {
+        acceptFormats() {
+          return this.targetFormats.map(f => '.' + f).join(',');
+        },
+        uniqueCharCount() {
+          return new Set(this.compressText).size;
+        }
+      },
+      methods: {
+        formatSize(bytes) {
+          if (!bytes) return '0 B';
+          if (bytes < 1024) return bytes + ' B';
+          if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+          return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        },
+        getFileFormat(filename) {
+          if (!filename) return '';
+          return filename.split('.').pop().toLowerCase();
+        },
+        showToast(message, type = 'info') {
+          this.toast = { show: true, message, type };
+          setTimeout(() => { this.toast.show = false; }, 3000);
+        },
+        triggerUpload() {
+          this.$refs.fileInput.click();
+        },
+        onDragOver() {
+          this.isDragging = true;
+        },
+        onDragLeave() {
+          this.isDragging = false;
+        },
+        onDrop(e) {
+          this.isDragging = false;
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            this.processFile(files[0]);
+          }
+        },
+        handleFileSelect(e) {
+          const files = e.target.files;
+          if (files.length > 0) {
+            this.processFile(files[0]);
+          }
+          e.target.value = '';
+        },
+        async processFile(file) {
+          const ext = this.getFileFormat(file.name);
+          if (!this.targetFormats.includes(ext)) {
+            this.showToast('不支持的文件格式', 'error');
+            return;
+          }
+          this.currentFile = file;
+          this.result = null;
+          const formData = new FormData();
+          formData.append('file', file);
+          try {
+            const res = await fetch('/webapi/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+              this.filePath = data.path;
+            } else {
+              this.showToast(data.error || '上传失败', 'error');
+              this.currentFile = null;
+            }
+          } catch (err) {
+            this.showToast('上传失败: ' + err.message, 'error');
+            this.currentFile = null;
+          }
+        },
+        removeFile() {
+          this.currentFile = null;
+          this.filePath = null;
+          this.result = null;
+        },
+        async convertFont() {
+          if (!this.filePath) {
+            this.showToast('请先上传字体文件', 'error');
+            return;
+          }
+          const sourceFormat = this.getFileFormat(this.currentFile.name);
+          if (sourceFormat === this.convertFormat) {
+            this.showToast('源格式和目标格式相同', 'error');
+            return;
+          }
+          this.loading = true;
+          this.result = null;
+          const formData = new FormData();
+          formData.append('file_path', this.filePath);
+          formData.append('target_format', this.convertFormat);
+          formData.append('original_filename', this.currentFile.name);
+          try {
+            const res = await fetch('/webapi/convert', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+              this.result = data;
+              this.showToast('转换成功', 'success');
+              this.loadHistory();
+            } else {
+              this.showToast(data.error || '转换失败', 'error');
+            }
+          } catch (err) {
+            this.showToast('转换失败: ' + err.message, 'error');
+          }
+          this.loading = false;
+        },
+        async compressFont() {
+          if (!this.filePath) {
+            this.showToast('请先上传字体文件', 'error');
+            return;
+          }
+          if (!this.compressText.trim()) {
+            this.showToast('请输入需要保留的文字', 'error');
+            return;
+          }
+          this.loading = true;
+          this.result = null;
+          const formData = new FormData();
+          formData.append('file_path', this.filePath);
+          formData.append('text', this.compressText);
+          formData.append('target_format', this.compressFormat);
+          formData.append('original_filename', this.currentFile.name);
+          try {
+            const res = await fetch('/webapi/compress', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+              this.result = data;
+              this.showToast('压缩成功', 'success');
+              this.loadHistory();
+            } else {
+              this.showToast(data.error || '压缩失败', 'error');
+            }
+          } catch (err) {
+            this.showToast('压缩失败: ' + err.message, 'error');
+          }
+          this.loading = false;
+        },
+        downloadResult() {
+          if (this.result && this.result.output_id) {
+            window.open('/webapi/download/' + this.result.output_id, '_blank');
+          }
+        },
+        async previewFont() {
+          if (!this.result || !this.result.output_id) return;
+          const fontUrl = '/webapi/preview/' + this.result.output_id;
+          const fontFace = new FontFace('PreviewFont', `url(${fontUrl})`);
+          try {
+            const loadedFont = await fontFace.load();
+            document.fonts.add(loadedFont);
+            this.showPreview = true;
+          } catch (err) {
+            this.showToast('字体预览加载失败', 'error');
+          }
+        },
+        formatTime(timestamp) {
+          if (!timestamp) return '';
+          const date = new Date(timestamp);
+          const now = new Date();
+          const diff = now - date;
+          
+          if (diff < 60000) return '刚刚';
+          if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+          if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+          
+          return date.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        },
+        copyCSS() {
+          if (!this.result || !this.result.output_id) return;
+          const cssCode = `@font-face {
+  font-family: 'MyFont';
+  src: url('/webapi/download/${this.result.output_id}') format('${this.result.target_format}');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.my-font {
+  font-family: 'MyFont', sans-serif;
+}`;
+          navigator.clipboard.writeText(cssCode).then(() => {
+            this.showToast('CSS代码已复制', 'success');
+          }).catch(() => {
+            this.showToast('复制失败', 'error');
+          });
+        },
+        async loadHistory() {
+          try {
+            const res = await fetch('/webapi/history');
+            const data = await res.json();
+            if (data.success) {
+              this.history = data.history;
+            }
+          } catch (err) {
+            console.error('加载历史记录失败:', err);
+          }
+        },
+        loadHistoryItem(item) {
+          this.result = {
+            output_id: item.output_id,
+            output_filename: item.output_filename,
+            target_format: item.target_format,
+            input_size: item.input_size || 0,
+            output_size: item.output_size || 0,
+            elapsed_time: item.elapsed_time,
+            char_count: item.char_count,
+            compression_ratio: item.compression_ratio
+          };
+          this.showToast('已加载历史记录', 'info');
+        }
+      },
+      mounted() {
+        this.loadHistory();
+      }
+    });
+    app.mount('#app');
+  </script>
+</body>
+</html>

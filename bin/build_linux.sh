@@ -10,8 +10,8 @@ if [ ! -d "dist" ]; then
 fi
 
 echo ""
-echo "[1/6] Installing dependencies..."
-pip install -r requirements.txt
+echo "[1/4] Installing dependencies..."
+python3.10 -m pip install -r requirements.txt
 
 if [ $? -ne 0 ]; then
     echo ""
@@ -20,8 +20,8 @@ if [ $? -ne 0 ]; then
 fi
 
 echo ""
-echo "[2/6] Installing PyInstaller..."
-pip install pyinstaller
+echo "[2/4] Installing PyInstaller..."
+python3.10 -m pip install pyinstaller
 
 if [ $? -ne 0 ]; then
     echo ""
@@ -30,7 +30,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo ""
-echo "[3/6] Cleaning old build files..."
+echo "[3/4] Cleaning old build files..."
 rm -rf build
 rm -f dist/dfont-linux-amd64
 rm -f dist/dfont-linux-arm64
@@ -39,7 +39,7 @@ ARCHS=("amd64" "arm64")
 
 for ARCH in "${ARCHS[@]}"; do
   echo ""
-  echo "[4/6] Building for $ARCH..."
+  echo "Building for $ARCH..."
   
   if [ "$ARCH" == "amd64" ]; then
     OUTPUT_NAME="dfont-linux-amd64"
@@ -56,12 +56,12 @@ for ARCH in "${ARCHS[@]}"; do
   fi
   
   echo ""
-  echo "[5/6] Moving $ARCH executable to dist..."
+  echo "Moving $ARCH executable to dist..."
   mv "dist/$OUTPUT_NAME" "dist/"
 done
 
 echo ""
-echo "[6/6] Cleaning temporary files..."
+echo "[4/4] Cleaning temporary files..."
 rm -rf build
 
 echo ""

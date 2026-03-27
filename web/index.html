@@ -6,8 +6,8 @@
   <title>DFont - 字体转换与压缩工具</title>
   <link rel="stylesheet" href="static/index.css">
 </head>
-<body @dragover.prevent="onDragOver" @dragleave="onDragLeave" @drop.prevent="onDrop">
-  <div id="app" v-cloak>
+<body id="app" v-cloak >
+  <div  @dragover.prevent="onDragOver" @dragleave="onDragLeave" @drop.prevent="onDrop">
     <div class="header">
       <div class="logo">🎨 DFont</div>
       <div class="subtitle">字体转换与压缩工具</div>
@@ -161,16 +161,16 @@
       <div class="history-list" v-if="!historyCollapsed">
         <div v-if="history.length === 0" class="history-empty">暂无历史记录</div>
         <div v-for="item in history" :key="item.output_id" class="history-item" @click="loadHistoryItem(item)">
-          <div class="history-item-header">
-            <span class="history-type">{{ item.type === 'convert' ? '🔄 转换' : '📦 压缩' }}</span>
+          <!-- <div class="history-item-header">
             <span class="history-time">{{ formatTime(item.timestamp) }}</span>
-          </div>
+          </div> -->
           <div class="history-item-body">
             <div class="history-filename">{{ item.output_filename }}</div>
             <div class="history-info">
               <span v-if="item.type === 'convert'">{{ item.source_format?.toUpperCase() }} → {{ item.target_format?.toUpperCase() }}</span>
               <span v-else>{{ item.target_format?.toUpperCase() }}</span>
               <span>{{ formatSize(item.output_size) }}</span>
+              <span class="history-type">{{ item.type === 'convert' ? '🔄 转换' : '📦 压缩' }}</span>
             </div>
           </div>
         </div>
@@ -405,6 +405,8 @@
             target_format: item.target_format,
             input_size: item.input_size || 0,
             output_size: item.output_size || 0,
+            input_size_formatted: formatSize(item.input_size),
+            output_size_formatted: formatSize(item.output_size),
             elapsed_time: item.elapsed_time,
             char_count: item.char_count,
             compression_ratio: item.compression_ratio

@@ -10,3 +10,11 @@ function dnotify(txt, type, time) {
   clearTimeout(dnotifyTimer);
   dnotifyTimer = setTimeout(() => dnotifyEl.style.display = 'none', (time || 2) * 1000);
 }
+
+function formatSize(size) {
+  if (!size) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(size) / Math.log(k));
+  return (size / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+}

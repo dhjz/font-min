@@ -99,6 +99,10 @@ def generate_output_filename(original_filename: str, target_format: str, is_comp
     suffix = '_subset' if is_compressed else ''
     return f"{base_name}{suffix}_{timestamp}.{target_format}"
 
+# 自定义uuid方法, 随机8位数
+def generate_uuid() -> str:
+    return str(uuid.uuid4())[:8]
+
 
 @app.get("/")
 async def index():
@@ -114,7 +118,7 @@ async def upload_file(file: UploadFile = File(...)):
     if not allowed_file(file.filename):
         raise HTTPException(status_code=400, detail=f'不支持的文件格式，支持: {", ".join(ALLOWED_EXTENSIONS)}')
     
-    file_id = str(uuid.uuid4())
+    file_id = generate_uuid()
     ext = file.filename.rsplit('.', 1)[1].lower()
     filename = f"{file_id}.{ext}"
     filepath = os.path.join(UPLOAD_FOLDER, filename)
@@ -152,7 +156,7 @@ async def convert_font(file_path: str = Form(...), target_format: str = Form('wo
         
         result = FontConverter.convert_bytes(font_bytes, original_filename, target_format)
         
-        output_id = str(uuid.uuid4())
+        output_id = generate_uuid()
         output_filename = generate_output_filename(original_filename, target_format, is_compressed=False)
         output_path = os.path.join(OUTPUT_FOLDER, f"{output_id}.{target_format}")
         
@@ -222,7 +226,7 @@ async def compress_font(file_path: str = Form(...), text: str = Form(''), target
         
         result = FontCompressor.compress_bytes(font_bytes, original_filename, text, target_format)
         
-        output_id = str(uuid.uuid4())
+        output_id = generate_uuid()
         output_filename = generate_output_filename(original_filename, target_format, is_compressed=True)
         output_path = os.path.join(OUTPUT_FOLDER, f"{output_id}.{target_format}")
         

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DFont - 字体转换与压缩工具</title>
   <link rel="stylesheet" href="static/index.css">
+  <script src="static/data.js"></script>
 </head>
 <body id="app" v-cloak >
   <div  @dragover.prevent="onDragOver" @dragleave="onDragLeave" @drop.prevent="onDrop">
@@ -18,7 +19,7 @@
         <span class="tab-icon">🔄</span> 字体转换
       </div>
       <div class="tab" :class="{ active: activeTab === 'compress' }" @click="activeTab = 'compress'">
-        <span class="tab-icon">📦</span> 字体压缩
+        <span class="tab-icon">📦</span> 字体压缩子集
       </div>
     </div>
     
@@ -68,6 +69,11 @@
           <div class="option-group">
             <label>需要保留的文字</label>
             <textarea v-model="compressText" placeholder="请输入需要保留的文字，工具将只提取包含这些文字的字体子集..." rows="4"></textarea>
+            <div class="preset-buttons">
+              <button v-for="preset in hanziPresets" :key="preset.name" class="btn-preset" @click="applyPreset(preset.text)">
+                {{ preset.name }}
+              </button>
+            </div>
             <div class="char-count">已输入 {{ compressText.length }} 个字符，{{ uniqueCharCount }} 个不重复字符</div>
           </div>
           <div class="option-group">
@@ -208,6 +214,10 @@
         },
         uniqueCharCount() {
           return new Set(this.compressText).size;
+        },
+        hanziPresets() {
+          if (typeof window.hanziList === 'undefined') return [];
+          return window.hanziList.map(item => ({ name: item.name, text: item.text }));
         }
       },
       methods: {
@@ -224,6 +234,10 @@
         showToast(message, type = 'info') {
           this.toast = { show: true, message, type };
           setTimeout(() => { this.toast.show = false; }, 3000);
+        },
+        applyPreset(text) {
+          this.compressText = text;
+          this.showToast('已应用预设文本', 'success');
         },
         triggerUpload() {
           this.$refs.fileInput.click();

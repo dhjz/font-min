@@ -35,7 +35,7 @@ rm -rf build
 rm -f dist/dfont-linux-amd64
 rm -f dist/dfont-linux-arm64
 
-ARCHS=("amd64" "arm64")
+ARCHS=("arm64" "amd64")
 
 for ARCH in "${ARCHS[@]}"; do
   echo ""

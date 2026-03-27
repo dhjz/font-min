@@ -24,5 +24,23 @@ git archive --format=zip --output=./latest.zip HEAD
 
 sed -i 's/\r$//' bin/build_linux.sh
 
+python3.10 -m pip install --upgrade pip -i https://mirrors.aliyun.com/pypi/simple/
+
 python3.10 -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
+
+# 推荐
+python3.10 -m pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+
+python3.10 -m pip config set global.index-url https://mirrors.cloud.tencent.com/pypi/simple/
+
+python3.10 -m pip config set global.index-url https://mirrors.huaweicloud.com/repository/pypi/simple/
+
+python3.10 -m pip config set global.index-url https://pypi.mirrors.ustc.edu.cn/simple/
+
+python3.10 -m pip config set global.index-url https://pypi.org/simple/
+
+# 构建 arm64 版本时缺少 objdump 工具。需要安装 binutils 包：
+sudo apt-get update
+sudo apt-get install binutils
 ```

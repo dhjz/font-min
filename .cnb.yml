@@ -22,86 +22,86 @@ $:
 main:
   push:
     - stages:
-        - name: Build Linux AMD64
-          image: python:3.10
-          runner:
-            tags: cnb:arch:amd64
-            cpus: 8
-          volumes:
-            - /root/.cache/pip:copy-on-write
-          script: |
-            echo "========================================"
-            echo "Building for Linux AMD64..."
-            echo "========================================"
-            pip install --upgrade pip
-            pip install -r requirements.txt
-            pip install pyinstaller
-            pyinstaller --onefile --clean --name dfont-linux-amd64 --add-data "web:web" main.py
-            echo ""
-            echo "Build completed!"
-            ls -lh dist/
-            echo ""
-            echo "Uploading artifacts..."
-            mkdir -p artifacts
-            cp dist/dfont-linux-amd64 artifacts/
+      - name: Build Linux AMD64
+        image: python:3.10
+        runner:
+          tags: cnb:arch:amd64
+          cpus: 8
+        volumes:
+          - /root/.cache/pip:copy-on-write
+        script: |
+          echo "========================================"
+          echo "Building for Linux AMD64..."
+          echo "========================================"
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+          pyinstaller --onefile --clean --name dfont-linux-amd64 --add-data "web:web" main.py
+          echo ""
+          echo "Build completed!"
+          ls -lh dist/
+          echo ""
+          echo "Uploading artifacts..."
+          mkdir -p artifacts
+          cp dist/dfont-linux-amd64 artifacts/
 
-        - name: Build Linux ARM64
-          image: python:3.10
-          runner:
-            tags: cnb:arch:arm64:v8
-            cpus: 8
-          volumes:
-            - /root/.cache/pip:copy-on-write
-          script: |
-            echo "========================================"
-            echo "Building for Linux ARM64..."
-            echo "========================================"
-            pip install --upgrade pip
-            pip install -r requirements.txt
-            pip install pyinstaller
-            pyinstaller --onefile --clean --name dfont-linux-arm64 --add-data "web:web" main.py
-            echo ""
-            echo "Build completed!"
-            ls -lh dist/
-            echo ""
-            echo "Uploading artifacts..."
-            mkdir -p artifacts
-            cp dist/dfont-linux-arm64 artifacts/
+      - name: Build Linux ARM64
+        image: python:3.10
+        runner:
+          tags: cnb:arch:arm64:v8
+          cpus: 8
+        volumes:
+          - /root/.cache/pip:copy-on-write
+        script: |
+          echo "========================================"
+          echo "Building for Linux ARM64..."
+          echo "========================================"
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+          pyinstaller --onefile --clean --name dfont-linux-arm64 --add-data "web:web" main.py
+          echo ""
+          echo "Build completed!"
+          ls -lh dist/
+          echo ""
+          echo "Uploading artifacts..."
+          mkdir -p artifacts
+          cp dist/dfont-linux-arm64 artifacts/
 
-        - name: Build Windows
-          image: docker.cnb.cool/examples/language/python-3:3.10
-          runner:
-            cpus: 8
-          volumes:
-            - /root/.cache/pip:copy-on-write
-          script: |
-            echo "========================================"
-            echo "Building for Windows..."
-            echo "========================================"
-            pip install --upgrade pip
-            pip install -r requirements.txt
-            pip install pyinstaller
-            pyinstaller --onefile --clean --name dfont.exe --add-data "web;web" main.py
-            echo ""
-            echo "Build completed!"
-            ls -lh dist/
-            echo ""
-            echo "Uploading artifacts..."
-            mkdir -p artifacts
-            cp dist/dfont.exe artifacts/
+      - name: Build Windows
+        image: docker.cnb.cool/examples/language/python-3:3.10
+        runner:
+          cpus: 8
+        volumes:
+          - /root/.cache/pip:copy-on-write
+        script: |
+          echo "========================================"
+          echo "Building for Windows..."
+          echo "========================================"
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+          pyinstaller --onefile --clean --name dfont.exe --add-data "web;web" main.py
+          echo ""
+          echo "Build completed!"
+          ls -lh dist/
+          echo ""
+          echo "Uploading artifacts..."
+          mkdir -p artifacts
+          cp dist/dfont.exe artifacts/
 
-        - name: Package all artifacts
-          image: alpine:latest
-          script: |
-            echo "========================================"
-            echo "Packaging all artifacts..."
-            echo "========================================"
-            apk add --no-cache zip
-            cd artifacts
-            zip -r ../dfont-all-platforms.zip *
-            echo ""
-            echo "All artifacts packaged!"
-            ls -lh ../dfont-all-platforms.zip
+      - name: Package all artifacts
+        image: alpine:latest
+        script: |
+          echo "========================================"
+          echo "Packaging all artifacts..."
+          echo "========================================"
+          apk add --no-cache zip
+          cd artifacts
+          zip -r ../dfont-all-platforms.zip *
+          echo ""
+          echo "All artifacts packaged!"
+          ls -lh ../dfont-all-platforms.zip
 
   # pull_request:
   #   - docker:

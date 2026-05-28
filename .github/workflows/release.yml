@@ -137,8 +137,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/dfont-linux-amd64/dfont-linux-amd64
-            artifacts/dfont-linux-arm64/dfont-linux-arm64
-            artifacts/dfont-windows/dfont.exe
-            artifacts/dfont-macos/dfont-macos
+            artifacts/dfont-linux-amd64/dfont-linux-amd64.zip
+            artifacts/dfont-linux-arm64/dfont-linux-arm64.zip
+            artifacts/dfont-windows/dfont-windows.zip
+            artifacts/dfont-macos/dfont-macos.zip
           generate_release_notes: true

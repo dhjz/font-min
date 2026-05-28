@@ -8,6 +8,182 @@ $:
       services:
         - vscode
         - docker
+      volumes:
+        - /root/.cache/pip:copy-on-write
+        - /root/.local/share/uv:copy-on-write
       stages:
-        - name: ls
-          script: ls -al
+        - name: Install dependencies
+          script: |
+            pip install uv
+            uv sync
+        - name: Run dev server
+          script: uv run python main.py
+
+main:
+  # push:
+  #   - stages:
+  #       - name: Build Linux AMD64
+  #         image: python:3.10
+  #         runner:
+  #           tags: cnb:arch:amd64
+  #           cpus: 8
+  #         volumes:
+  #           - /root/.cache/pip:copy-on-write
+  #         script: |
+  #           echo "========================================"
+  #           echo "Building for Linux AMD64..."
+  #           echo "========================================"
+  #           pip install --upgrade pip
+  #           pip install -r requirements.txt
+  #           pip install pyinstaller
+  #           pyinstaller --onefile --clean --name dfont-linux-amd64 --add-data "web:web" main.py
+  #           echo ""
+  #           echo "Build completed!"
+  #           ls -lh dist/
+  #           echo ""
+  #           echo "Uploading artifacts..."
+  #           mkdir -p artifacts
+  #           cp dist/dfont-linux-amd64 artifacts/
+
+  #       - name: Build Linux ARM64
+  #         image: python:3.10
+  #         runner:
+  #           tags: cnb:arch:arm64:v8
+  #           cpus: 8
+  #         volumes:
+  #           - /root/.cache/pip:copy-on-write
+  #         script: |
+  #           echo "========================================"
+  #           echo "Building for Linux ARM64..."
+  #           echo "========================================"
+  #           pip install --upgrade pip
+  #           pip install -r requirements.txt
+  #           pip install pyinstaller
+  #           pyinstaller --onefile --clean --name dfont-linux-arm64 --add-data "web:web" main.py
+  #           echo ""
+  #           echo "Build completed!"
+  #           ls -lh dist/
+  #           echo ""
+  #           echo "Uploading artifacts..."
+  #           mkdir -p artifacts
+  #           cp dist/dfont-linux-arm64 artifacts/
+
+  #       - name: Build Windows
+  #         image: docker.cnb.cool/examples/language/python-3:3.10
+  #         runner:
+  #           cpus: 8
+  #         volumes:
+  #           - /root/.cache/pip:copy-on-write
+  #         script: |
+  #           echo "========================================"
+  #           echo "Building for Windows..."
+  #           echo "========================================"
+  #           pip install --upgrade pip
+  #           pip install -r requirements.txt
+  #           pip install pyinstaller
+  #           pyinstaller --onefile --clean --name dfont.exe --add-data "web;web" main.py
+  #           echo ""
+  #           echo "Build completed!"
+  #           ls -lh dist/
+  #           echo ""
+  #           echo "Uploading artifacts..."
+  #           mkdir -p artifacts
+  #           cp dist/dfont.exe artifacts/
+
+  #       - name: Package all artifacts
+  #         image: alpine:latest
+  #         script: |
+  #           echo "========================================"
+  #           echo "Packaging all artifacts..."
+  #           echo "========================================"
+  #           apk add --no-cache zip
+  #           cd artifacts
+  #           zip -r ../dfont-all-platforms.zip *
+  #           echo ""
+  #           echo "All artifacts packaged!"
+  #           ls -lh ../dfont-all-platforms.zip
+
+  # pull_request:
+  #   - docker:
+  #       image: python:3.10
+  #     volumes:
+  #       - /root/.cache/pip:copy-on-write
+  #       - /root/.local/share/uv:copy-on-write
+  #     stages:
+  #       - name: Install dependencies
+  #         script: |
+  #           pip install uv
+  #           uv sync
+  #       - name: Run tests
+  #         script: |
+  #           echo "Running tests..."
+  #           uv run python -c "from backend.routes import app; print('Import test passed')"
+  #           echo "All tests passed!"
+
+  tag:
+    - stages:
+        - name: Build Release Linux AMD64
+          image: python:3.10
+          runner:
+            tags: cnb:arch:amd64
+            cpus: 8
+          volumes:
+            - /root/.cache/pip:copy-on-write
+          script: |
+            echo "========================================"
+            echo "Building Release for Linux AMD64..."
+            echo "========================================"
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            pip install pyinstaller
+            pyinstaller --onefile --clean --name dfont-linux-amd64 --add-data "web:web" main.py
+            mkdir -p release
+            cp dist/dfont-linux-amd64 release/
+
+        - name: Build Release Linux ARM64
+          image: python:3.10
+          runner:
+            tags: cnb:arch:arm64:v8
+            cpus: 8
+          volumes:
+            - /root/.cache/pip:copy-on-write
+          script: |
+            echo "========================================"
+            echo "Building Release for Linux ARM64..."
+            echo "========================================"
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            pip install pyinstaller
+            pyinstaller --onefile --clean --name dfont-linux-arm64 --add-data "web:web" main.py
+            mkdir -p release
+            cp dist/dfont-linux-arm64 release/
+
+        - name: Build Release Windows
+          image: docker.cnb.cool/examples/language/python-3:3.10
+          runner:
+            cpus: 8
+          volumes:
+            - /root/.cache/pip:copy-on-write
+          script: |
+            echo "========================================"
+            echo "Building Release for Windows..."
+            echo "========================================"
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            pip install pyinstaller
+            pyinstaller --onefile --clean --name dfont.exe --add-data "web;web" main.py
+            mkdir -p release
+            cp dist/dfont.exe release/
+
+        - name: Create Release Package
+          image: alpine:latest
+          script: |
+            echo "========================================"
+            echo "Creating release package..."
+            echo "========================================"
+            apk add --no-cache zip
+            cd release
+            zip -r ../dfont-release.zip *
+            echo ""
+            echo "Release package created!"
+            ls -lh ../dfont-release.zip

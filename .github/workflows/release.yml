@@ -57,9 +57,15 @@ jobs:
       - name: Build in ARM64 container
         run: |
           docker run --rm --platform linux/arm64 -v ${{ github.workspace }}:/workspace -w /workspace arm64v8/python:3.10-slim bash -c "
+            set -e
+            apt-get update &&
+            apt-get install -y --no-install-recommends binutils zip &&
+            rm -rf /var/lib/apt/lists/* &&
+
             pip install --upgrade pip &&
             pip install -r requirements.txt &&
             pip install pyinstaller &&
+
             pyinstaller --onefile --clean --name dfont-linux-arm64 --add-data 'web:web' main.py &&
             cd dist &&
             zip dfont-linux-arm64.zip dfont-linux-arm64

@@ -1,0 +1,12 @@
+$:
+  vscode:
+    - docker:
+        image: docker.cnb.cool/examples/language/python-3:3.10
+      runner:
+        cpus: 8
+      services:
+        - vscode
+        - docker
+      stages:
+        - name: ls
+          script: ls -al

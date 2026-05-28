@@ -3,6 +3,7 @@ $:
     - docker:
         image: docker.cnb.cool/examples/language/python-3:3.10
       runner:
+        tags: cnb:arch:arm64:v8 # arm64:v8  amd64
         cpus: 8
       services:
         - vscode

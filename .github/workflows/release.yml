@@ -4,9 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - '*'
 
 jobs:
   build-linux-amd64:
+    if: contains(github.event.head_commit.message, '打包') || contains(github.event.head_commit.message, 'build') || contains(github.event.head_commit.message, 'release') || github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -28,13 +31,18 @@ jobs:
         run: |
           pyinstaller --onefile --clean --name dfont-linux-amd64 --add-data "web:web" main.py
 
+      - name: Package artifact
+        run: |
+          cd dist && zip dfont-linux-amd64.zip dfont-linux-amd64
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: dfont-linux-amd64
-          path: dist/dfont-linux-amd64
+          path: dist/dfont-linux-amd64.zip
 
   build-linux-arm64:
+    if: contains(github.event.head_commit.message, '打包') || contains(github.event.head_commit.message, 'build') || contains(github.event.head_commit.message, 'release') || github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -61,6 +69,7 @@ jobs:
           path: dist/dfont-linux-arm64.zip
 
   build-windows:
+    if: contains(github.event.head_commit.message, '打包') || contains(github.event.head_commit.message, 'build') || contains(github.event.head_commit.message, 'release') || github.ref_type == 'tag'
     runs-on: windows-latest
     steps:
       - name: Checkout code
@@ -82,13 +91,18 @@ jobs:
         run: |
           pyinstaller --onefile --clean --name dfont.exe --add-data "web;web" main.py
 
+      - name: Package artifact
+        run: |
+          cd dist && Compress-Archive -Path dfont.exe -DestinationPath dfont-windows.zip
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: dfont-windows
-          path: dist/dfont.exe
+          path: dist/dfont-windows.zip
 
   build-macos:
+    if: contains(github.event.head_commit.message, '打包') || contains(github.event.head_commit.message, 'build') || contains(github.event.head_commit.message, 'release') || github.ref_type == 'tag'
     runs-on: macos-latest
     steps:
       - name: Checkout code
@@ -110,14 +124,19 @@ jobs:
         run: |
           pyinstaller --onefile --clean --name dfont-macos --add-data "web:web" main.py
 
+      - name: Package artifact
+        run: |
+          cd dist && zip dfont-macos.zip dfont-macos
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: dfont-macos
-          path: dist/dfont-macos
+          path: dist/dfont-macos.zip
 
   create-release:
     needs: [build-linux-amd64, build-linux-arm64, build-windows, build-macos]
+    if: always() && (contains(github.event.head_commit.message, '打包') || contains(github.event.head_commit.message, 'build') || contains(github.event.head_commit.message, 'release') || github.ref_type == 'tag')
     runs-on: ubuntu-latest
     permissions:
       contents: write

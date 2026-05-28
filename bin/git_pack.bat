@@ -9,7 +9,7 @@ if not exist "bin\dist" mkdir bin\dist
 echo.
 echo Generating timestamp...
 for /f "tokens=2 delims==" %%a in ('wmic os get localdatetime /value') do set datetime=%%a
-set filename=ypxq-generate-qa_%datetime:~0,12%.zip
+set filename=dfont_%datetime:~0,12%.zip
 
 echo Creating %filename%...
 git archive -o bin\dist\%filename% HEAD

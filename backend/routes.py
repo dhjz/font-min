@@ -27,6 +27,11 @@ app.add_middleware(
 
 if getattr(sys, 'frozen', False):
     BASE_DIR = os.path.dirname(sys.executable)
+    web_target = os.path.join(BASE_DIR, 'web')
+    if not os.path.exists(web_target):
+        web_source = os.path.join(sys._MEIPASS, 'web')
+        if os.path.exists(web_source):
+            shutil.copytree(web_source, web_target)
 else:
     BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')

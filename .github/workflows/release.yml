@@ -41,57 +41,57 @@ jobs:
           name: dfont-linux-amd64
           path: dist/dfont-linux-amd64.zip
   build-linux-arm64:
-  if: contains(github.event.head_commit.message, '打包') || contains(github.event.head_commit.message, 'build') || contains(github.event.head_commit.message, 'release') || github.ref_type == 'tag'
-  runs-on: ubuntu-24.04-arm
-  timeout-minutes: 20
+    if: contains(github.event.head_commit.message, '打包') || contains(github.event.head_commit.message, 'build') || contains(github.event.head_commit.message, 'release') || github.ref_type == 'tag'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
-        cache: "pip"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
 
-    - name: Install system dependencies
-      run: |
-        uname -a
-        set -euxo pipefail
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends \
-          zip \
-          binutils \
-          patchelf
-        sudo rm -rf /var/lib/apt/lists/*
+      - name: Install system dependencies
+        run: |
+          uname -a
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            zip \
+            binutils \
+            patchelf
+          sudo rm -rf /var/lib/apt/lists/*
 
-    - name: Install Python dependencies
-      run: |
-        set -euxo pipefail
-        python -m pip install -U pip
-        pip install -r requirements.txt
-        pip install -U pyinstaller
+      - name: Install Python dependencies
+        run: |
+          set -euxo pipefail
+          python -m pip install -U pip
+          pip install -r requirements.txt
+          pip install -U pyinstaller
 
-    - name: Build with PyInstaller
-      run: |
-        set -euxo pipefail
-        pyinstaller --onefile --clean \
-          --name dfont-linux-arm64 \
-          --add-data "web:web" \
-          main.py
+      - name: Build with PyInstaller
+        run: |
+          set -euxo pipefail
+          pyinstaller --onefile --clean \
+            --name dfont-linux-arm64 \
+            --add-data "web:web" \
+            main.py
 
-    - name: Package artifact
-      run: |
-        set -euxo pipefail
-        cd dist
-        zip dfont-linux-arm64.zip dfont-linux-arm64
+      - name: Package artifact
+        run: |
+          set -euxo pipefail
+          cd dist
+          zip dfont-linux-arm64.zip dfont-linux-arm64
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: dfont-linux-arm64
-        path: dist/dfont-linux-arm64.zip
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfont-linux-arm64
+          path: dist/dfont-linux-arm64.zip
   # build-linux-arm64:
   #   if: contains(github.event.head_commit.message, '打包') || contains(github.event.head_commit.message, 'build') || contains(github.event.head_commit.message, 'release') || github.ref_type == 'tag'
   #   runs-on: ubuntu-latest

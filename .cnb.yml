@@ -3,7 +3,7 @@ $:
     - docker:
         image: docker.cnb.cool/examples/language/python-3:3.10
       runner:
-        tags: cnb:arch:arm64:v8 # arm64:v8    amd64
+        tags: cnb:arch:arm64:v8
         cpus: 8
       services:
         - vscode
@@ -21,10 +21,6 @@ $:
 
 master:
   push:
-    # filter:
-    #   commit:
-    #     message:
-    #       contains: "[打包]"
     - stages:
       - name: Build Linux AMD64
         image: python:3.10
@@ -37,6 +33,7 @@ master:
           echo "========================================"
           echo "Building for Linux AMD64..."
           echo "========================================"
+          apt-get update && apt-get install -y zip
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
@@ -66,6 +63,7 @@ master:
           echo "========================================"
           echo "Building for Linux ARM64..."
           echo "========================================"
+          apt-get update && apt-get install -y zip
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
@@ -85,8 +83,9 @@ master:
           ls -lh /cnb/artifacts/
 
       - name: Build Windows
-        image: docker.cnb.cool/examples/language/python-3:3.10
+        image: python:3.10
         runner:
+          tags: ["windows"]
           cpus: 8
         volumes:
           - /root/.cache/pip:copy-on-write
@@ -102,6 +101,7 @@ master:
           echo "========================================"
           echo "Building for Windows..."
           echo "========================================"
+          apt-get update && apt-get install -y zip
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
@@ -119,3 +119,4 @@ master:
           mkdir -p /cnb/artifacts
           cp dfont-windows.zip /cnb/artifacts/
           ls -lh /cnb/artifacts/
+

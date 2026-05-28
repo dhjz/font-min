@@ -19,7 +19,7 @@ $:
         - name: Run dev server
           script: uv run python main.py
 
-main:
+master:
   push:
     - stages:
       - name: Build Linux AMD64

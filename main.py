@@ -8,7 +8,7 @@ def main():
     args = parser.parse_args()
     
     print("=" * 50)
-    print("  DFont -  字体转换与压缩工具")
+    print("  DFont -  字体转换与压缩工具, -p 端口号 (默认: 40050)")
     print(f"  访问地址: http://127.0.0.1:{args.port}")
     print(f"  API文档: http://127.0.0.1:{args.port}/docs")
     print("=" * 50)

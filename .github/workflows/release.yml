@@ -51,9 +51,12 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build in ARM64 container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace arm64v8/python:3.10-slim bash -c "
+          docker run --rm --platform linux/arm64 -v ${{ github.workspace }}:/workspace -w /workspace arm64v8/python:3.10-slim bash -c "
             pip install --upgrade pip &&
             pip install -r requirements.txt &&
             pip install pyinstaller &&
@@ -136,7 +139,7 @@ jobs:
 
   create-release:
     needs: [build-linux-amd64, build-linux-arm64, build-windows, build-macos]
-    if: always() && (contains(github.event.head_commit.message, '打包') || contains(github.event.head_commit.message, 'build') || contains(github.event.head_commit.message, 'release') || github.ref_type == 'tag')
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
       contents: write

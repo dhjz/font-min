@@ -21,6 +21,10 @@ $:
 
 master:
   push:
+    # filter:
+    #   commit:
+    #     message:
+    #       contains: "[打包]"
     - stages:
       - name: Build Linux AMD64
         image: python:3.10
@@ -68,27 +72,27 @@ master:
           mkdir -p artifacts
           cp dist/dfont-linux-arm64 artifacts/
 
-      - name: Build Windows
-        image: docker.cnb.cool/examples/language/python-3:3.10
-        runner:
-          cpus: 8
-        volumes:
-          - /root/.cache/pip:copy-on-write
-        script: |
-          echo "========================================"
-          echo "Building for Windows..."
-          echo "========================================"
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
-          pyinstaller --onefile --clean --name dfont.exe --add-data "web;web" main.py
-          echo ""
-          echo "Build completed!"
-          ls -lh dist/
-          echo ""
-          echo "Uploading artifacts..."
-          mkdir -p artifacts
-          cp dist/dfont.exe artifacts/
+      # - name: Build Windows
+      #   image: docker.cnb.cool/examples/language/python-3:3.10
+      #   runner:
+      #     cpus: 8
+      #   volumes:
+      #     - /root/.cache/pip:copy-on-write
+      #   script: |
+      #     echo "========================================"
+      #     echo "Building for Windows..."
+      #     echo "========================================"
+      #     pip install --upgrade pip
+      #     pip install -r requirements.txt
+      #     pip install pyinstaller
+      #     pyinstaller --onefile --clean --name dfont.exe --add-data "web;web" main.py
+      #     echo ""
+      #     echo "Build completed!"
+      #     ls -lh dist/
+      #     echo ""
+      #     echo "Uploading artifacts..."
+      #     mkdir -p artifacts
+      #     cp dist/dfont.exe artifacts/
 
       - name: Package all artifacts
         image: alpine:latest
